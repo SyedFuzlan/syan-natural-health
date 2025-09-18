@@ -89,66 +89,79 @@ const ResultsPanel: React.FC<ResultsPanelProps> = ({
           Metabolic Calculations
         </h4>
         
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {/* BMR */}
-          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-            <div>
-              <div className="font-medium text-blue-900">BMR (Mifflin-St Jeor)</div>
-              <div className="text-sm text-blue-700">Basal Metabolic Rate</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-blue-900">{Math.round(results.bmr)}</div>
-              <div className="text-sm text-blue-700">kcal/day</div>
-            </div>
+          <div className="p-3 bg-blue-50 rounded-lg text-center">
+            <div className="text-lg font-bold text-blue-900">{Math.round(results.bmr)}</div>
+            <div className="text-xs text-blue-700">BMR</div>
           </div>
 
           {/* RMR */}
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-            <div>
-              <div className="font-medium text-green-900">RMR (Harris-Benedict)</div>
-              <div className="text-sm text-green-700">Resting Metabolic Rate</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-green-900">{Math.round(results.rmr)}</div>
-              <div className="text-sm text-green-700">kcal/day</div>
-            </div>
+          <div className="p-3 bg-green-50 rounded-lg text-center">
+            <div className="text-lg font-bold text-green-900">{Math.round(results.rmr)}</div>
+            <div className="text-xs text-green-700">RMR</div>
           </div>
 
           {/* TDEE */}
-          <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-            <div>
-              <div className="font-medium text-purple-900">TDEE</div>
-              <div className="text-sm text-purple-700">Total Daily Energy Expenditure</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-purple-900">{Math.round(results.tdee)}</div>
-              <div className="text-sm text-purple-700">kcal/day</div>
-            </div>
+          <div className="p-3 bg-purple-50 rounded-lg text-center">
+            <div className="text-lg font-bold text-purple-900">{Math.round(results.tdee)}</div>
+            <div className="text-xs text-purple-700">TDEE</div>
           </div>
 
-          {/* Exercise Energy Expenditure */}
-          <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-            <div>
-              <div className="font-medium text-orange-900">Exercise EE</div>
-              <div className="text-sm text-orange-700">Exercise Energy Expenditure</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-orange-900">{Math.round(results.exerciseEE)}</div>
-              <div className="text-sm text-orange-700">kcal/day</div>
-            </div>
+          {/* Exercise EE */}
+          <div className="p-3 bg-orange-50 rounded-lg text-center">
+            <div className="text-lg font-bold text-orange-900">{Math.round(results.exerciseEE)}</div>
+            <div className="text-xs text-orange-700">Exercise EE</div>
           </div>
 
           {/* Fat-Free Mass */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div>
-              <div className="font-medium text-gray-900">Fat-Free Mass</div>
-              <div className="text-sm text-gray-700">Lean body weight</div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-bold text-gray-900">{results.fatFreeMass.toFixed(1)}</div>
-              <div className="text-sm text-gray-700">kg</div>
-            </div>
+          <div className="p-3 bg-gray-50 rounded-lg text-center">
+            <div className="text-lg font-bold text-gray-900">{results.fatFreeMass.toFixed(1)}</div>
+            <div className="text-xs text-gray-700">FFM (kg)</div>
           </div>
+
+          {/* Energy Availability */}
+          <div className={`p-3 bg-${eaStatus.color}-50 rounded-lg text-center`}>
+            <div className={`text-lg font-bold text-${eaStatus.color}-900`}>{results.energyAvailability.toFixed(1)}</div>
+            <div className={`text-xs text-${eaStatus.color}-700`}>EA</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Macro Breakdown */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+          <Activity className="w-5 h-5 mr-2 text-purple-600" />
+          Macro Breakdown ({userData.userType ? userData.userType.replace('_', ' ').toUpperCase() : 'NORMAL'})
+        </h4>
+        
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          {/* Protein */}
+          <div className="text-center p-4 bg-red-50 rounded-lg">
+            <div className="text-2xl font-bold text-red-900">{results.macros.proteinGrams}g</div>
+            <div className="text-sm text-red-700">Protein</div>
+            <div className="text-xs text-red-600">{results.macros.proteinKcal} kcal</div>
+            <div className="text-xs text-red-600 mt-1">{results.macros.proteinPerKg}g/kg</div>
+          </div>
+
+          {/* Carbs */}
+          <div className="text-center p-4 bg-yellow-50 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-900">{results.macros.carbsGrams}g</div>
+            <div className="text-sm text-yellow-700">Carbs</div>
+            <div className="text-xs text-yellow-600">{results.macros.carbsKcal} kcal</div>
+          </div>
+
+          {/* Fats */}
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-2xl font-bold text-green-900">{results.macros.fatsGrams}g</div>
+            <div className="text-sm text-green-700">Fats</div>
+            <div className="text-xs text-green-600">{results.macros.fatsKcal} kcal</div>
+          </div>
+        </div>
+
+        <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+          <strong>Ratio:</strong> Protein optimized for {userData.userType || 'normal'} goals, 
+          remaining calories split as 3:0.5 (Carbs:Fats)
         </div>
       </div>
 

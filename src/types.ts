@@ -6,6 +6,17 @@ export interface UserData {
   activityLevel: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active';
   bodyFatPercentage: number;
   name?: string;
+  userType?: 'normal' | 'daily_workout' | 'fat_loss' | 'bodybuilding';
+}
+
+export interface MacroBreakdown {
+  proteinGrams: number;
+  proteinKcal: number;
+  carbsGrams: number;
+  carbsKcal: number;
+  fatsGrams: number;
+  fatsKcal: number;
+  proteinPerKg: number;
 }
 
 export interface CalculationResults {
@@ -15,6 +26,7 @@ export interface CalculationResults {
   energyAvailability: number; // Energy Availability
   exerciseEE: number; // Exercise Energy Expenditure
   fatFreeMass: number; // Fat-Free Mass
+  macros: MacroBreakdown; // Macro breakdown
 }
 
 export interface AnalyticsData {

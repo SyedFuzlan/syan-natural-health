@@ -1,4 +1,4 @@
-import { UserData, CalculationResults } from '../types';
+import { UserData, CalculationResults, MacroBreakdown } from '../types';
 
 export const calculateMetabolics = (userData: UserData): CalculationResults => {
   const { weight, height, age, gender, activityLevel, bodyFatPercentage } = userData;
@@ -43,13 +43,17 @@ export const calculateMetabolics = (userData: UserData): CalculationResults => {
   // Energy Availability
   const energyAvailability = (tdee - exerciseEE) / fatFreeMass;
 
+  // Calculate macros based on user type
+  const macros = calculateMacros(tdee, weight, userData.userType || 'normal');
+
   return {
     bmr,
     rmr,
     tdee,
     energyAvailability,
     exerciseEE,
-    fatFreeMass
+    fatFreeMass,
+    macros
   };
 };
 
@@ -61,6 +65,46 @@ export const getAgeRange = (age: number): string => {
   if (age < 55) return '45-54';
   if (age < 65) return '55-64';
   return '65+';
+};
+
+// Calculate macros based on user type and TDEE
+export const calculateMacros = (tdee: number, bodyWeight: number, userType: 'normal' | 'daily_workout' | 'fat_loss' | 'bodybuilding'): MacroBreakdown => {
+  // Protein multipliers based on user type
+  const proteinMultipliers = {
+    normal: 1.0,
+    daily_workout: 1.3,
+    fat_loss: 1.6,
+    bodybuilding: 2.0
+  };
+
+  // Calculate protein requirements
+  const proteinPerKg = proteinMultipliers[userType];
+  const proteinGrams = bodyWeight * proteinPerKg;
+  const proteinKcal = proteinGrams * 4;
+
+  // Remaining calories after protein
+  const remainingKcal = tdee - proteinKcal;
+
+  // Fixed ratio for remaining calories: 3 parts carbs, 0.5 parts fats
+  const totalRatioUnits = 3 + 0.5; // 3.5 units
+  const kcalPerUnit = remainingKcal / totalRatioUnits;
+
+  // Calculate carbs and fats
+  const carbsKcal = 3 * kcalPerUnit;
+  const fatsKcal = 0.5 * kcalPerUnit;
+
+  const carbsGrams = carbsKcal / 4;
+  const fatsGrams = fatsKcal / 9;
+
+  return {
+    proteinGrams: Math.round(proteinGrams),
+    proteinKcal: Math.round(proteinKcal),
+    carbsGrams: Math.round(carbsGrams),
+    carbsKcal: Math.round(carbsKcal),
+    fatsGrams: Math.round(fatsGrams),
+    fatsKcal: Math.round(fatsKcal),
+    proteinPerKg: proteinPerKg
+  };
 };
 
 export const getBodyFatRange = (percentage: number): string => {

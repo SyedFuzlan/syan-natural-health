@@ -15,6 +15,13 @@ const UserInputForm: React.FC<UserInputFormProps> = ({ userData, onChange }) => 
     { value: 'extremely_active', label: 'Extremely Active', description: 'Very hard exercise, physical job' }
   ];
 
+  const userTypes = [
+    { value: 'normal', label: 'Normal Person', description: '1.0g protein/kg' },
+    { value: 'daily_workout', label: 'Daily Workout', description: '1.3g protein/kg' },
+    { value: 'fat_loss', label: 'Fat Loss', description: '1.6g protein/kg' },
+    { value: 'bodybuilding', label: 'Bodybuilding', description: '2.0g protein/kg' }
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Weight */}
@@ -158,6 +165,43 @@ const UserInputForm: React.FC<UserInputFormProps> = ({ userData, onChange }) => 
                   userData.activityLevel === level.value ? 'text-green-600' : 'text-gray-600'
                 }`}>
                   {level.description}
+                </div>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* User Type */}
+      <div className="md:col-span-2">
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          User Type (for macro calculation)
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {userTypes.map((type) => (
+            <label key={type.value} className="cursor-pointer">
+              <input
+                type="radio"
+                name="userType"
+                value={type.value}
+                checked={userData.userType === type.value}
+                onChange={(e) => onChange({ userType: e.target.value as any })}
+                className="sr-only"
+              />
+              <div className={`p-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md text-center ${
+                userData.userType === type.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}>
+                <div className={`font-medium text-sm mb-1 ${
+                  userData.userType === type.value ? 'text-blue-700' : 'text-gray-900'
+                }`}>
+                  {type.label}
+                </div>
+                <div className={`text-xs ${
+                  userData.userType === type.value ? 'text-blue-600' : 'text-gray-600'
+                }`}>
+                  {type.description}
                 </div>
               </div>
             </label>

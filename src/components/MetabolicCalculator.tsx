@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Calculator, Info, Users } from 'lucide-react';
 import UserInputForm from './UserInputForm';
 import BodyFatSelector from './BodyFatSelector';
@@ -14,7 +14,8 @@ const MetabolicCalculator: React.FC = () => {
     age: 0,
     gender: 'male',
     activityLevel: 'moderately_active',
-    bodyFatPercentage: 15
+    bodyFatPercentage: 15,
+    userType: 'normal'
   });
 
   const [results, setResults] = useState<CalculationResults | null>(null);
