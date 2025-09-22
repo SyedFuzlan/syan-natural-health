@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, TrendingUp, Users, Activity, Download, Calendar, BarChart3, PieChart, Trash2 } from 'lucide-react';
+import { Lock, TrendingUp, Users, Activity, Download, Calendar, BarChart3, PieChart, Trash2, Wifi, WifiOff } from 'lucide-react';
 import { getAnalyticsData, getAnalyticsSummary, clearAnalyticsData } from '../utils/analytics';
+import { firebaseService } from '../utils/firebase';
 import AnalyticsCharts from './AnalyticsCharts';
 import { AnalyticsData, AnalyticsSummary } from '../types';
 
@@ -11,6 +12,8 @@ const CreatorDashboard: React.FC = () => {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [dateRange, setDateRange] = useState('30'); // days
   const [loading, setLoading] = useState(false);
+  const [isFirebaseConnected, setIsFirebaseConnected] = useState(false);
+  const [realtimeUnsubscribe, setRealtimeUnsubscribe] = useState<(() => void) | null>(null);
 
   // Simple authentication (in production, use proper auth)
   const authenticate = () => {
@@ -25,8 +28,39 @@ const CreatorDashboard: React.FC = () => {
   const loadAnalytics = async () => {
     setLoading(true);
     try {
-      const data = getAnalyticsData();
-      const summaryData = getAnalyticsSummary(parseInt(dateRange));
+      // Check if Firebase is configured
+      const firebaseConfigured = firebaseService.isConfigured();
+      setIsFirebaseConnected(firebaseConfigured);
+
+      let data: AnalyticsData[];
+      
+      if (firebaseConfigured) {
+        // Load from Firebase if configured
+        try {
+          data = await firebaseService.getUserData();
+          
+          // Set up real-time listener
+          if (realtimeUnsubscribe) {
+            realtimeUnsubscribe();
+          }
+          
+          const unsubscribe = firebaseService.onUserDataChange((realtimeData) => {
+            setAnalyticsData(realtimeData);
+            setSummary(getAnalyticsSummary(parseInt(dateRange), realtimeData));
+          });
+          
+          setRealtimeUnsubscribe(() => unsubscribe);
+        } catch (firebaseError) {
+          console.error('Firebase error, falling back to localStorage:', firebaseError);
+          data = getAnalyticsData();
+          setIsFirebaseConnected(false);
+        }
+      } else {
+        // Fallback to localStorage
+        data = getAnalyticsData();
+      }
+      
+      const summaryData = getAnalyticsSummary(parseInt(dateRange), data);
       setAnalyticsData(data);
       setSummary(summaryData);
     } catch (error) {
@@ -35,6 +69,15 @@ const CreatorDashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Cleanup real-time listener on unmount
+  useEffect(() => {
+    return () => {
+      if (realtimeUnsubscribe) {
+        realtimeUnsubscribe();
+      }
+    };
+  }, [realtimeUnsubscribe]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -59,12 +102,23 @@ const CreatorDashboard: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const clearData = () => {
+  const handleClearData = async () => {
     if (window.confirm('Are you sure you want to clear all analytics data? This action cannot be undone.')) {
-      clearAnalyticsData();
-      setAnalyticsData([]);
-      setSummary(null);
-      loadAnalytics();
+      try {
+        // Clear from both localStorage and Firebase
+        clearAnalyticsData();
+        
+        if (firebaseService.isConfigured()) {
+          await firebaseService.clearAllData();
+        }
+        
+        setAnalyticsData([]);
+        setSummary(null);
+        loadAnalytics();
+      } catch (error) {
+        console.error('Error clearing data:', error);
+        alert('Error clearing data. Please try again.');
+      }
     }
   };
 
@@ -114,17 +168,29 @@ const CreatorDashboard: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Creator Analytics Dashboard</h2>
-            <p className="text-gray-600">Comprehensive insights into calculator usage and user engagement</p>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center space-x-3">
+            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+            <div className="flex items-center space-x-2">
+              {isFirebaseConnected ? (
+                <div className="flex items-center text-green-600">
+                  <Wifi className="w-4 h-4 mr-1" />
+                  <span className="text-xs">Live</span>
+                </div>
+              ) : (
+                <div className="flex items-center text-orange-600">
+                  <WifiOff className="w-4 h-4 mr-1" />
+                  <span className="text-xs">Local</span>
+                </div>
+              )}
+            </div>
           </div>
-          
+        
           <div className="flex items-center space-x-4">
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
@@ -141,7 +207,7 @@ const CreatorDashboard: React.FC = () => {
             </button>
             
             <button
-              onClick={clearData}
+              onClick={handleClearData}
               className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
             >
               <Trash2 className="w-4 h-4" />

@@ -37,7 +37,7 @@ const UserInputForm: React.FC<UserInputFormProps> = ({ userData, onChange }) => 
           step="0.1"
           value={userData.weight || ''}
           onChange={(e) => onChange({ weight: parseFloat(e.target.value) || 0 })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           placeholder="Enter weight"
         />
       </div>
@@ -55,7 +55,7 @@ const UserInputForm: React.FC<UserInputFormProps> = ({ userData, onChange }) => 
           step="0.1"
           value={userData.height || ''}
           onChange={(e) => onChange({ height: parseFloat(e.target.value) || 0 })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           placeholder="Enter height"
         />
       </div>
@@ -72,7 +72,7 @@ const UserInputForm: React.FC<UserInputFormProps> = ({ userData, onChange }) => 
           max="120"
           value={userData.age || ''}
           onChange={(e) => onChange({ age: parseInt(e.target.value) || 0 })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
           placeholder="Enter age"
         />
       </div>

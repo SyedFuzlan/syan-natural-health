@@ -1,14 +1,38 @@
 import { UserData, CalculationResults, AnalyticsData, AnalyticsSummary } from '../types';
+import { firebaseService } from './firebase';
 import { getAgeRange, getBodyFatRange, getEAStatus } from './calculations';
 
 const ANALYTICS_KEY = 'metabolic_calculator_analytics';
 
+// Basic data validation
+const validateUserData = (userData: UserData): boolean => {
+  return !!(
+    userData.weight > 0 && userData.weight < 500 &&
+    userData.height > 0 && userData.height < 300 &&
+    userData.age > 0 && userData.age < 150 &&
+    userData.gender &&
+    userData.activityLevel &&
+    userData.bodyFatPercentage > 0
+  );
+};
+
 export const saveCalculationData = (userData: UserData, results: CalculationResults): void => {
   try {
+    // Validate input data
+    if (!validateUserData(userData)) {
+      console.warn('Invalid user data, skipping analytics save');
+      return;
+    }
+
+    // Sanitize user name (basic privacy measure)
+    const sanitizedName = userData.name ? 
+      userData.name.trim().substring(0, 50).replace(/[<>]/g, '') : 
+      'Anonymous';
+
     // Create analytics data with user name
     const analyticsEntry: AnalyticsData = {
       timestamp: new Date().toISOString(),
-      userName: userData.name || 'Anonymous',
+      userName: sanitizedName,
       demographics: {
         age_range: getAgeRange(userData.age),
         gender: userData.gender,
@@ -35,6 +59,13 @@ export const saveCalculationData = (userData: UserData, results: CalculationResu
     
     // Save to localStorage
     localStorage.setItem(ANALYTICS_KEY, JSON.stringify(trimmedData));
+
+    // Also save to Firebase if configured
+    if (firebaseService.isConfigured()) {
+      firebaseService.addUserData(analyticsEntry).catch(error => {
+        console.error('Failed to save to Firebase:', error);
+      });
+    }
   } catch (error) {
     console.error('Error saving analytics data:', error);
   }
@@ -50,12 +81,12 @@ export const getAnalyticsData = (): AnalyticsData[] => {
   }
 };
 
-export const getAnalyticsSummary = (daysBack: number = 30): AnalyticsSummary => {
-  const data = getAnalyticsData();
+export const getAnalyticsSummary = (days: number = 30, data?: AnalyticsData[]): AnalyticsSummary => {
+  const analyticsData = data || getAnalyticsData();
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+  cutoffDate.setDate(cutoffDate.getDate() - days);
   
-  const filteredData = data.filter(item => 
+  const filteredData = analyticsData.filter(item => 
     new Date(item.timestamp) >= cutoffDate
   );
 
@@ -114,7 +145,7 @@ export const getAnalyticsSummary = (daysBack: number = 30): AnalyticsSummary => 
 
   return {
     totalCalculations: filteredData.length,
-    dailyAverage: filteredData.length / daysBack,
+    dailyAverage: filteredData.length / days,
     genderDistribution,
     activityLevelDistribution,
     bodyFatDistribution,
@@ -131,52 +162,3 @@ export const clearAnalyticsData = (): void => {
     console.error('Error clearing analytics data:', error);
   }
 };
-
-// Generate sample data for demo purposes
-export const generateSampleData = (count: number = 50): void => {
-  const sampleData: AnalyticsData[] = [];
-  const now = new Date();
-  
-  for (let i = 0; i < count; i++) {
-    const daysAgo = Math.floor(Math.random() * 30);
-    const timestamp = new Date(now);
-    timestamp.setDate(timestamp.getDate() - daysAgo);
-    
-    const genders = ['male', 'female'];
-    const activities = ['sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'];
-    const ageRanges = ['18-24', '25-34', '35-44', '45-54', '55-64'];
-    const bodyFatRanges = ['8-12%', '13-17%', '18-22%', '23-27%', '28-35%'];
-    const eaStatuses = ['low', 'optimal', 'high'];
-    
-    const gender = genders[Math.floor(Math.random() * genders.length)];
-    const bmr = gender === 'male' ? 1600 + Math.random() * 400 : 1200 + Math.random() * 300;
-    const rmr = bmr + (Math.random() * 100 - 50);
-    const tdee = bmr * (1.2 + Math.random() * 0.7);
-    const ea = 25 + Math.random() * 25;
-    
-    sampleData.push({
-      timestamp: timestamp.toISOString(),
-      userName: 'Sample User',
-      demographics: {
-        age_range: ageRanges[Math.floor(Math.random() * ageRanges.length)],
-        gender,
-        activity_level: activities[Math.floor(Math.random() * activities.length)],
-        body_fat_range: bodyFatRanges[Math.floor(Math.random() * bodyFatRanges.length)]
-      },
-      results: {
-        bmr,
-        rmr,
-        tdee,
-        ea,
-        ea_status: eaStatuses[Math.floor(Math.random() * eaStatuses.length)] as 'low' | 'optimal' | 'high'
-      }
-    });
-  }
-  
-  // Merge with existing data
-  const existingData = getAnalyticsData();
-  const combinedData = [...existingData, ...sampleData];
-  localStorage.setItem(ANALYTICS_KEY, JSON.stringify(combinedData.slice(-1000)));
-};
-
-// Remove auto-generation of fake data - only store real user data
